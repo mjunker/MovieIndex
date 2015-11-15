@@ -1,0 +1,44 @@
+<div class="container">
+
+  <button ng-click="mainCtrl.buildIndex()">
+    Build index
+  </button>
+
+  <button ng-click="mainCtrl.dropIndex()">
+    Drop index
+  </button>
+
+  <div class="input-group" >
+    <input type="text" class="form-control" ng-model="mainCtrl.searchExpression" placeholder="Search for...">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button" ng-click="mainCtrl.load()">Go!</button>
+      </span>
+
+  </div><!-- /input-group -->
+
+
+
+  <div class="row">
+    <div class="col-sm-6 col-md-3" ng-repeat="movie in mainCtrl.movies | filter:mainCtrl.searchExpression">
+      <div class="thumbnail">
+        <a href="{{movie.imdbLink}}">
+          <img class="moviePoster" src="{{movie.imageLink}}">
+        </a>
+
+        <div class="caption">
+          <h4 class="movieTitle"><span class="label label-default">{{movie.imdbRating}}</span> {{movie.title}}</h4>
+
+          <p>
+            {{movie.year}} <br>
+            <a href="{{link}}" ng-repeat="link in movie.links">{{$index}} </a>
+          </p>
+
+          <p class="movieDescription">
+            {{movie.description}}
+          </p>
+          <input ng-click="mainCtrl.ignoreFile(movie.title)" class="btn btn-default" type="button" value="Ignore">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
