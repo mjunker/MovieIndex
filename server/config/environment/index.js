@@ -35,6 +35,8 @@ var all = {
   // List of user roles
   userRoles: ['guest', 'user', 'admin'],
 
+  mongoUrl: 'mongodb://localhost'
+
 };
 
 // Export the config object based on the NODE_ENV

@@ -2,24 +2,15 @@
 var express = require('express');
 var router = express.Router();
 var _ = require('lodash');
-var fs = require('fs');
-
-
-let ignoredFiles = [];
-
-fs.readFile('server/api/ignoreMovie/ignored.txt', {encoding: 'utf-8'}, function read(err, data) {
-  if (err) {
-    throw err;
-  }
-  ignoredFiles = data.split('\n');
-});
+var IgnoredMovie = require('../../initDb').IgnoredMovie;
 
 
 router.put('/', function (req, res, next) {
-  ignoredFiles.push(req.body.title);
-  console.log(req.body.title);
-  fs.appendFile('server/api/ignoreMovie/ignored.txt', req.body.title, 'utf8' );
-  fs.appendFile('server/api/ignoreMovie/ignored.txt', '\n', 'utf8' );
+  new IgnoredMovie({
+    imdbNr: req.body.imdbNr,
+    reason: req.body.reason
+  }).save();
+  res.sendStatus(200)
 });
 
 module.exports = router;

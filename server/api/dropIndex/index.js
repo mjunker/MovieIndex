@@ -10,6 +10,7 @@ router.get('/', function (req, res, next) {
   MovieInfo.remove(function(err) {
     console.log(err);
   });
+  res.sendStatus(200)
 });
 
 module.exports = router;

@@ -15,9 +15,6 @@
       </span>
 
   </div><!-- /input-group -->
-
-
-
   <div class="row">
     <div class="col-sm-6 col-md-3" ng-repeat="movie in mainCtrl.movies | filter:mainCtrl.searchExpression">
       <div class="thumbnail">
@@ -29,14 +26,16 @@
           <h4 class="movieTitle"><span class="label label-default">{{movie.imdbRating}}</span> {{movie.title}}</h4>
 
           <p>
-            {{movie.year}} <br>
+            {{movie.year}} {{movie.imdbNr}}<br>
             <a href="{{link}}" ng-repeat="link in movie.links">{{$index}} </a>
           </p>
 
           <p class="movieDescription">
             {{movie.description}}
           </p>
-          <input ng-click="mainCtrl.ignoreFile(movie.title)" class="btn btn-default" type="button" value="Ignore">
+          <input ng-click="mainCtrl.ignoreFile(movie.imdbNr, 'ignore')" class="btn btn-default" type="button" value="Not interested">
+          <input ng-click="mainCtrl.ignoreFile(movie.imdbNr, 'watched')" class="btn btn-default" type="button" value="Watched">
+
         </div>
       </div>
     </div>

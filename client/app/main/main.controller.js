@@ -21,12 +21,12 @@ class MainController {
     });
   }
 
-  ignoreFile(title) {
+  ignoreFile(imdbNr, reason) {
 
     var req = {
       method: 'PUT',
       url: '/api/ignoreMovie',
-      data: { title: title }
+      data: { imdbNr: imdbNr, reason: reason }
     }
 
     this.$http(req);

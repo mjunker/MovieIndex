@@ -2,24 +2,18 @@
 var Crawler = require("crawler");
 var url = require('url');
 var _ = require('lodash');
-var fs = require('fs');
 var request = require('request');
 var MovieInfo = require('../../initDb').MovieInfo;
-
 var express = require('express');
 var router = express.Router();
 
 var maxPagesToIndex = 30;
-
 var imdbBaseUrl = 'http://www.imdb.com';
 
 router.get('/', buildIndex);
 
-function buildIndex() {
-
+function initCrawler() {
   let alreadyIndexedPages = [];
-  let movies = {};
-
 
   var forumCrawler = new Crawler({
     maxConnections: 2,
@@ -34,25 +28,25 @@ function buildIndex() {
         var id = $(a).attr('id');
         var href = $(a).attr('href');
         if (_.includes(id, 'thread_title')) {
-          handleThread(movies, linkText, href);
+          handleThread(linkText, href);
         }
         if (isIndexLink(href)) {
           var pageNumber = parseInt(href.split('index')[1].split('.html')[0]);
           if (!_.includes(alreadyIndexedPages, href) && pageNumber < maxPagesToIndex && _.endsWith(href, '.html')) {
-            console.log('Adding page ' + pageNumber);
             alreadyIndexedPages.push(href);
             forumCrawler.queue(href);
           }
         }
-
       });
     }
   });
-
-
+  return forumCrawler;
+}
+function buildIndex() {
+  let forumCrawler = initCrawler();
 }
 
-function handleThread(movies, linkText, href) {
+function handleThread(linkText, href) {
   var yearCandidates = /\d\d\d\d/.exec(linkText);
 
   var year;
@@ -68,76 +62,69 @@ function handleThread(movies, linkText, href) {
   name = name.replace(/\s{2,}/g, ' ');
   name = _.trim(name);
   var normalizedName = name.replace(/\W/g, '').toLowerCase();
-
-
-
-  if (_.isUndefined(movies[normalizedName])) {
-    initMovieWithImdbResults(movies,name, normalizedName, href, year);
-  } else {
-    movies[normalizedName].links.push(href);
-  }
+  initMovieWithImdbResults(name, normalizedName, href, year);
 }
 
 function isIndexLink(href) {
   return !_.isUndefined(href) && ((href.indexOf('f89/index') > -1) || (href.indexOf('f125/index') > -1));
 }
 
-
-function downloadImage(downloadUrl, filename) {
-  var download = function (uri, filename, callback) {
-    request.head(uri, function (err, res, body) {
-      console.log('content-type:', res.headers['content-type']);
-      console.log('content-length:', res.headers['content-length']);
-      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-    });
-  };
-
-  download(downloadUrl, filename, function () {
-    console.log('done');
-  });
+function downloadImage(downloadUrl, movieInfo) {
+  movieInfo.imageLink = downloadUrl;
 }
 
-
-function getFileName(url) {
-  return url.substring(url.lastIndexOf('/') + 1);
-
-}
-function loadImdbDetails($, movieInfo) {
-
+function parseRating($, movieInfo) {
   $('span[itemprop=ratingValue]').each(function (index, span) {
     var rating = $(span).text();
     if (!_.isUndefined(movieInfo.imdbRating)) {
       movieInfo.imdbRating = parseFloat(rating);
-      console.log(movieInfo.title + ' found IMDB rating ' + rating);
     }
 
   });
+}
+function parseImdbNr($, movieInfo) {
+  var imdbUrl = $($('head > link').first()).attr('href');
+
+  var pathSegments = imdbUrl.split('/');
+  movieInfo.imdbNr = pathSegments[pathSegments.length - 2];
+}
+function parseAndDownloadImage($, movieInfo) {
   var imageLink = $($('#img_primary > div.image > a > img').first()).attr('src');
   if (!_.isUndefined(imageLink)) {
-    var newPath = 'client/assets/images/' + getFileName(imageLink);
-    console.log('Downloading file' + imageLink);
-    downloadImage(imageLink, newPath);
-    movieInfo.imageLink = 'assets/images/' + getFileName(imageLink);
+    downloadImage(imageLink, movieInfo);
   }
-
-
+}
+function parseDescription(movieInfo, $) {
   movieInfo.description = $('p[itemprop=description]').first().text();
+}
+function loadImdbDetails($, movieInfo) {
+  parseRating($, movieInfo);
+  parseImdbNr($, movieInfo);
+  parseAndDownloadImage($, movieInfo);
+  parseDescription(movieInfo, $);
   saveToDatabase(movieInfo);
 }
 
-
 function saveToDatabase(movieInfo) {
-  MovieInfo.count({normalizedName: movieInfo.normalizedName}, function (err, count) {
+  var predicate = {imdbNr: movieInfo.imdbNr};
+
+  MovieInfo.count(predicate, function (err, count) {
     if (count == 0) {
-      console.log('saved to db')
       new MovieInfo(movieInfo).save();
+    } else {
+      MovieInfo.findOne(predicate, function (err, existingMovieInfo) {
+        if (err) return handleError(err);
+        if (!_.includes(existingMovieInfo.links, movieInfo.links[0])) {
+          existingMovieInfo.links.push(movieInfo.links[0]);
+          existingMovieInfo.save();
+        }
+
+      })
     }
   });
 }
 
-
 function handleImdbSearchResult($, searchResult, movieInfo, imdbCrawler) {
-  var linkText = $(searchResult).text();
   var id = $(searchResult).attr('id');
   var href = $(searchResult).attr('href');
   movieInfo.imdbLink = imdbBaseUrl + href;
@@ -149,15 +136,12 @@ function handleImdbSearchResult($, searchResult, movieInfo, imdbCrawler) {
 
       if (!error) {
         loadImdbDetails($, movieInfo);
-
       }
-
     }
   }]);
 }
-function initMovieWithImdbResults(movies, name, normalizedName, href, yearInfo) {
+function initMovieWithImdbResults(name, normalizedName, href, yearInfo) {
 
-  //
   var movieInfo = {
     title: name,
     normalizedName: normalizedName,
@@ -166,23 +150,18 @@ function initMovieWithImdbResults(movies, name, normalizedName, href, yearInfo) 
     links: [href],
     year: yearInfo
   };
-  movies[normalizedName] = movieInfo;
 
   var imdbCrawler = new Crawler({
     maxConnections: 5,
     rateLimits: 250,
     cache: true,
-    // This will be called for each crawled page
     callback: function (error, result, $) {
       var firstResult = $('td.result_text > a').first();
       handleImdbSearchResult($, firstResult, movieInfo, imdbCrawler);
     }
   });
   imdbCrawler.queue('http://www.imdb.com/find?ref_=nv_sr_fn&q=' + encodeURIComponent(normalizedName) + '&s=all');
-
-
 }
-
 
 module.exports = router;
 
