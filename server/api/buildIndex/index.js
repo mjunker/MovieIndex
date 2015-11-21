@@ -116,6 +116,7 @@ function saveToDatabase(movieInfo) {
         if (err) return handleError(err);
         if (!_.includes(existingMovieInfo.links, movieInfo.links[0])) {
           existingMovieInfo.links.push(movieInfo.links[0]);
+          existingMovieInfo.lastUpdate = new Date();
           existingMovieInfo.save();
         }
 
@@ -148,7 +149,8 @@ function initMovieWithImdbResults(name, normalizedName, href, yearInfo) {
     imdbNr: '',
     imdbRating: 0.0,
     links: [href],
-    year: yearInfo
+    year: yearInfo,
+    firstSeen: new Date()
   };
 
   var imdbCrawler = new Crawler({

@@ -45,16 +45,19 @@
   white-space: nowrap;
 }
 
-.movieDescription {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-height: 100px;
-
-}
 
 .searchBar {
   position: fixed;
   top: 0px;
   z-index: 999;
+}
+
+
+.movieDescription {
+  max-width: 220px;
+  max-height: 150px;
+  min-height: 150px;
+  margin: 0 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

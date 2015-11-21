@@ -7,6 +7,11 @@ class MainController {
     this.$http.get('/api/movies').success(movies => {
       this.movies = movies;
     });
+    this.sortBy = '-firstSeen';
+  }
+
+  sortMovies(order) {
+    this.sortBy = order;
   }
 
   buildIndex() {
@@ -22,6 +27,8 @@ class MainController {
   }
 
   ignoreFile(imdbNr, reason) {
+    console.log('ignore ' + imdbNr);
+
 
     var req = {
       method: 'PUT',
@@ -29,7 +36,9 @@ class MainController {
       data: { imdbNr: imdbNr, reason: reason }
     }
 
-    this.$http(req);
+    this.$http(req).then(() => {
+      this.movies.splice(_.findIndex(this.movies, {imdbNr: imdbNr}), 1);
+    });
   }
 }
 MainController.$inject = ['$http'];

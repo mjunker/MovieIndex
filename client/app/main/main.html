@@ -1,22 +1,36 @@
 <div class="container">
 
-  <button ng-click="mainCtrl.buildIndex()">
-    Build index
-  </button>
+  <div>
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <button ng-click="mainCtrl.buildIndex()">
+          Build index
+        </button>
 
-  <button ng-click="mainCtrl.dropIndex()">
-    Drop index
-  </button>
+        <button ng-click="mainCtrl.dropIndex()">
+          Drop index
+        </button>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-body">
 
-  <div class="input-group" >
-    <input type="text" class="form-control" ng-model="mainCtrl.searchExpression" placeholder="Search for...">
-      <span class="input-group-btn">
-        <button class="btn btn-default" type="button" ng-click="mainCtrl.load()">Go!</button>
-      </span>
+        <input type="text" class="form-control" ng-model="mainCtrl.searchExpression" placeholder="Search for...">
 
-  </div><!-- /input-group -->
+        <div class="btn-group" role="group">
+          <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies('-firstSeen')">Newest</button>
+          <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies('-imdbRating')">Rating</button>
+          <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies(['-year', '-firstSeen'])">Year
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container">
   <div class="row">
-    <div class="col-sm-6 col-md-3" ng-repeat="movie in mainCtrl.movies | filter:mainCtrl.searchExpression">
+    <div class="col-sm-6 col-md-3"
+         ng-repeat="movie in mainCtrl.movies | filter:mainCtrl.searchExpression | orderBy:mainCtrl.sortBy">
       <div class="thumbnail">
         <a href="{{movie.imdbLink}}">
           <img class="moviePoster" src="{{movie.imageLink}}">
@@ -26,15 +40,17 @@
           <h4 class="movieTitle"><span class="label label-default">{{movie.imdbRating}}</span> {{movie.title}}</h4>
 
           <p>
-            {{movie.year}} {{movie.imdbNr}}<br>
+            {{movie.year}}<br>
             <a href="{{link}}" ng-repeat="link in movie.links">{{$index}} </a>
           </p>
 
           <p class="movieDescription">
             {{movie.description}}
           </p>
-          <input ng-click="mainCtrl.ignoreFile(movie.imdbNr, 'ignore')" class="btn btn-default" type="button" value="Not interested">
-          <input ng-click="mainCtrl.ignoreFile(movie.imdbNr, 'watched')" class="btn btn-default" type="button" value="Watched">
+          <input ng-click="mainCtrl.ignoreFile(movie.imdbNr, 'ignore')" class="btn btn-default" type="button"
+                 value="Not interested">
+          <input ng-click="mainCtrl.ignoreFile(movie.imdbNr, 'watched')" class="btn btn-default" type="button"
+                 value="Watched">
 
         </div>
       </div>

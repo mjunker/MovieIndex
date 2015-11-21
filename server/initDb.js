@@ -20,6 +20,8 @@ var movieInfoSchema = mongoose.Schema({
   imdbRating: Number,
   links: [String],
   image: String,
+  lastUpdate: Date,
+  firstSeen: Date,
   year: Number
 });
 var MovieInfo = mongoose.model('MovieInfo', movieInfoSchema);
