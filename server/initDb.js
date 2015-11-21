@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost/test');
+mongoose.connect('mongodb://mongo/movies');
 var db = mongoose.connection;
 
 db.once('open', function (callback) {
