@@ -20,8 +20,8 @@
         <div class="btn-group" role="group">
           <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies('-firstSeen')">Newest</button>
           <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies('-imdbRating')">Rating</button>
-          <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies(['-year', '-firstSeen'])">Year
-          </button>
+          <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies(['-year', '-imdbRating'])">Best/Year</button>
+          <button class="btn btn-default" type="button" ng-click="mainCtrl.sortMovies(['-year', '-firstSeen'])">Release Date</button>
         </div>
       </div>
     </div>

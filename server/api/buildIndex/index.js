@@ -44,6 +44,8 @@ function initCrawler() {
 }
 function buildIndex() {
   let forumCrawler = initCrawler();
+  forumCrawler.queue('http://tehparadox.com/forum/f125/');
+  forumCrawler.queue('http://tehparadox.com/forum/f89/');
 }
 
 function handleThread(linkText, href) {
@@ -141,6 +143,20 @@ function handleImdbSearchResult($, searchResult, movieInfo, imdbCrawler) {
     }
   }]);
 }
+
+function initImdbCrawler(movieInfo, normalizedName) {
+  console.log('init imdb crawler')
+  var imdbCrawler = new Crawler({
+    maxConnections: 5,
+    rateLimits: 250,
+    cache: true,
+    callback: function (error, result, $) {
+      var firstResult = $('td.result_text > a').first();
+      handleImdbSearchResult($, firstResult, movieInfo, imdbCrawler);
+    }
+  });
+  imdbCrawler.queue('http://www.imdb.com/find?ref_=nv_sr_fn&q=' + encodeURIComponent(normalizedName) + '&s=all');
+}
 function initMovieWithImdbResults(name, normalizedName, href, yearInfo) {
 
   var movieInfo = {
@@ -153,16 +169,20 @@ function initMovieWithImdbResults(name, normalizedName, href, yearInfo) {
     firstSeen: new Date()
   };
 
-  var imdbCrawler = new Crawler({
-    maxConnections: 5,
-    rateLimits: 250,
-    cache: true,
-    callback: function (error, result, $) {
-      var firstResult = $('td.result_text > a').first();
-      handleImdbSearchResult($, firstResult, movieInfo, imdbCrawler);
+  var predicate = {normalizedName: movieInfo.normalizedName};
+
+  MovieInfo.count(predicate, function (err, count) {
+    if (count == 0) {
+      initImdbCrawler(movieInfo, normalizedName);
+    } else {
+      MovieInfo.findOne(predicate, function (err, existingMovieInfo) {
+        if (err) return handleError(err);
+        if (!existingMovieInfo.imdbNr) {
+          initImdbCrawler(movieInfo, normalizedName);
+        }
+      })
     }
   });
-  imdbCrawler.queue('http://www.imdb.com/find?ref_=nv_sr_fn&q=' + encodeURIComponent(normalizedName) + '&s=all');
 }
 
 module.exports = router;
